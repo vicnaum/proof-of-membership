@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import {
     Alert,
@@ -9,8 +8,6 @@ import {
     Button,
     FormControl,
     FormLabel,
-    Grid,
-    GridItem,
     Heading,
     IconButton,
     Input,
@@ -21,8 +18,9 @@ import {
     NumberInputStepper,
     SimpleGrid,
     Stack,
+    Image,
 } from '@chakra-ui/react';
-import { gql, useLazyQuery, useQuery } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 import { CopyIcon } from '@chakra-ui/icons';
 
 // const QUERY = gql`
@@ -87,7 +85,8 @@ function App() {
     return (
         <Stack>
             <Heading>Zero-Knowledge Proof of Membership</Heading>
-            <FormControl id="amount" isRequired>
+            <Image src="./assets/logo.svg" alt="" />
+            <FormControl id="min" isRequired>
                 <FormLabel>Minimum USDC Balance {setMinBalance}</FormLabel>
                 <NumberInput
                     defaultValue={100}
@@ -98,14 +97,14 @@ function App() {
                 </NumberInput>
             </FormControl>
 
-            <FormControl id="amount">
+            <FormControl id="max">
                 <FormLabel>Maximum USDC Balance</FormLabel>
                 <NumberInput min={0} onChange={(e: any) => setMaxBalance(e)}>
                     <NumberInputField />
                 </NumberInput>
             </FormControl>
 
-            <FormControl id="amount">
+            <FormControl id="address">
                 <FormLabel>Size of Address Set</FormLabel>
                 <NumberInput defaultValue={200} min={1}>
                     <NumberInputField />
@@ -140,6 +139,7 @@ function App() {
                     justifyContent="center"
                     textAlign="center"
                     height="200px"
+                    mt={20}
                 >
                     <AlertIcon boxSize="40px" mr={0} />
                     <AlertTitle mt={4} mb={1} fontSize="lg">

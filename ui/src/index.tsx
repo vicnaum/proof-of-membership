@@ -10,6 +10,11 @@ import {
     gql,
     InMemoryCache,
 } from '@apollo/client';
+import {
+    HyperThemeEditor,
+    ThemeEditorProvider,
+} from '@hypertheme-editor/chakra-ui';
+import Footer from './Footer';
 
 const client = new ApolloClient({
     uri: 'https://api.thegraph.com/subgraphs/name/centrehq/usdc',
@@ -19,11 +24,14 @@ const client = new ApolloClient({
 ReactDOM.render(
     <React.StrictMode>
         <ChakraProvider>
-            <ApolloProvider client={client}>
-                <Container>
-                    <App />
-                </Container>
-            </ApolloProvider>
+            <ThemeEditorProvider>
+                <ApolloProvider client={client}>
+                    <Container>
+                        <App />
+                    </Container>
+                    <Footer />
+                </ApolloProvider>
+            </ThemeEditorProvider>
         </ChakraProvider>
     </React.StrictMode>,
     document.getElementById('root'),
