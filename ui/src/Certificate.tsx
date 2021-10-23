@@ -9,8 +9,9 @@ import {
     ModalHeader,
     ModalOverlay,
 } from '@chakra-ui/react';
+import QRCode from 'react-qr-code';
 
-const Certificate = ({ isOpen, isClose }: any) => {
+const Certificate = ({ isOpen, isClose, membershipProof }: any) => {
     return (
         <Modal isOpen={isOpen} onClose={isClose}>
             <ModalOverlay />
@@ -19,7 +20,8 @@ const Certificate = ({ isOpen, isClose }: any) => {
                 <ModalCloseButton />
                 <ModalBody>
                     <Center>
-                        <img src="./certificate.svg" alt="" />
+                        {/*<img src="./certificate.svg" alt="" />*/}
+                        <QRCode value={membershipProof} />
                     </Center>
                 </ModalBody>
 

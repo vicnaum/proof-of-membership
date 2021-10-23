@@ -74,6 +74,7 @@ function App() {
     const [maxBalance, setMaxBalance] = useState();
     const [showProof, setShowProof] = useState(false);
     const [showCertificate, setShowCertificate] = useState(false);
+    const [membershipProof, setMembershipProof] = useState('345345tsdfga');
 
     const { data } = useQuery(QUERY, {
         variables: { balance_gt: minBalance, balance_lt: maxBalance },
@@ -175,7 +176,7 @@ function App() {
                         Proof generated!
                     </AlertTitle>
                     <AlertDescription maxWidth="sm">
-                        5dsdf436sfg346s34sgf43{' '}
+                        {membershipProof}{' '}
                         <IconButton
                             aria-label="copy"
                             colorScheme={'green'}
@@ -189,6 +190,7 @@ function App() {
             <Certificate
                 isOpen={showCertificate}
                 isClose={() => setShowCertificate(false)}
+                membershipProof={membershipProof}
             />
         </Stack>
     );
