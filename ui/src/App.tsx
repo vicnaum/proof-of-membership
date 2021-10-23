@@ -84,8 +84,9 @@ function App() {
 
     return (
         <Stack>
-            <Heading>Zero-Knowledge Proof of Membership</Heading>
-            <Image src="./assets/logo.svg" alt="" />
+            <Image url="./logo.svg" />
+            <img src="./logo.svg" alt="" />
+
             <FormControl id="min" isRequired>
                 <FormLabel>Minimum USDC Balance {setMinBalance}</FormLabel>
                 <NumberInput
