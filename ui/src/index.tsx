@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { ChakraProvider, Container } from '@chakra-ui/react';
+import { ChakraProvider, Container, Flex } from '@chakra-ui/react';
 import {
     ApolloClient,
     ApolloProvider,
@@ -24,14 +24,18 @@ const client = new ApolloClient({
 ReactDOM.render(
     <React.StrictMode>
         <ChakraProvider>
-            <ThemeEditorProvider>
-                <ApolloProvider client={client}>
+            <ApolloProvider client={client}>
+                <Flex
+                    style={{ height: '100vh' }}
+                    direction={'column'}
+                    justifyContent={'space-between'}
+                >
                     <Container>
                         <App />
                     </Container>
                     <Footer />
-                </ApolloProvider>
-            </ThemeEditorProvider>
+                </Flex>
+            </ApolloProvider>
         </ChakraProvider>
     </React.StrictMode>,
     document.getElementById('root'),
