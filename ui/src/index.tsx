@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { ChakraProvider, Container, Flex } from '@chakra-ui/react';
+import { Box, ChakraProvider, Container, Flex } from '@chakra-ui/react';
 import {
     ApolloClient,
     ApolloProvider,
@@ -30,9 +30,11 @@ ReactDOM.render(
                     direction={'column'}
                     justifyContent={'space-between'}
                 >
-                    <Container>
-                        <App />
-                    </Container>
+                    <Box bgGradient="linear(to-b, orange.50, transparent)">
+                        <Container>
+                            <App />
+                        </Container>
+                    </Box>
                     <Footer />
                 </Flex>
             </ApolloProvider>

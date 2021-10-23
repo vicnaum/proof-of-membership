@@ -22,6 +22,7 @@ import {
 } from '@chakra-ui/react';
 import { gql, useQuery } from '@apollo/client';
 import { CopyIcon } from '@chakra-ui/icons';
+import Certificate from './Certificate';
 
 // const QUERY = gql`
 //     query GetGreeting($language: String!) {
@@ -72,6 +73,7 @@ function App() {
     const [minBalance, setMinBalance] = useState();
     const [maxBalance, setMaxBalance] = useState();
     const [showProof, setShowProof] = useState(false);
+    const [showCertificate, setShowCertificate] = useState(false);
 
     const { data } = useQuery(QUERY, {
         variables: { balance_gt: minBalance, balance_lt: maxBalance },
@@ -97,7 +99,7 @@ function App() {
                     variant="filled"
                     onChange={(e: any) => setMinBalance(e)}
                 >
-                    <NumberInputField />
+                    <NumberInputField style={{ fontWeight: 'bold' }} />
                 </NumberInput>
             </FormControl>
 
@@ -109,7 +111,7 @@ function App() {
                     min={0}
                     onChange={(e: any) => setMaxBalance(e)}
                 >
-                    <NumberInputField />
+                    <NumberInputField style={{ fontWeight: 'bold' }} />
                 </NumberInput>
             </FormControl>
 
@@ -136,6 +138,7 @@ function App() {
                         color={'tomato'}
                         variant="filled"
                         placeholder="0xBc11295936Aa79d594139de1B2e12629414F3BDB"
+                        style={{ fontWeight: 'bold' }}
                     />
                 </NumberInput>
             </FormControl>
@@ -143,13 +146,18 @@ function App() {
             <SimpleGrid columns={2} spacing={5}>
                 <Button
                     variant="solid"
-                    color={'tomato'}
+                    colorScheme="orange"
                     onClick={() => setShowProof(true)}
                 >
                     Generate Proof
                 </Button>
 
-                <Button disabled={!showProof}>Mint certificate</Button>
+                <Button
+                    disabled={!showProof}
+                    onClick={() => setShowCertificate(true)}
+                >
+                    Mint certificate
+                </Button>
             </SimpleGrid>
 
             {showProof && (
@@ -178,6 +186,10 @@ function App() {
                     </AlertDescription>
                 </Alert>
             )}
+            <Certificate
+                isOpen={showCertificate}
+                isClose={() => setShowCertificate(false)}
+            />
         </Stack>
     );
 }
