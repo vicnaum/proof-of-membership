@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import {
+    Alert,
+    AlertDescription,
+    AlertIcon,
+    AlertTitle,
     Button,
     FormControl,
     FormLabel,
     Grid,
     GridItem,
     Heading,
+    IconButton,
     Input,
     NumberDecrementStepper,
     NumberIncrementStepper,
@@ -18,6 +23,7 @@ import {
     Stack,
 } from '@chakra-ui/react';
 import { gql, useLazyQuery, useQuery } from '@apollo/client';
+import { CopyIcon } from '@chakra-ui/icons';
 
 // const QUERY = gql`
 //     query GetGreeting($language: String!) {
@@ -67,6 +73,7 @@ const QUERY = gql`
 function App() {
     const [minBalance, setMinBalance] = useState();
     const [maxBalance, setMaxBalance] = useState();
+    const [showProof, setShowProof] = useState(false);
 
     const { data } = useQuery(QUERY, {
         variables: { balance_gt: minBalance, balance_lt: maxBalance },
@@ -110,17 +117,46 @@ function App() {
             </FormControl>
 
             <FormControl id="amount">
-                <FormLabel>Max USDC Balance</FormLabel>
+                <FormLabel>Your address</FormLabel>
                 <NumberInput min={0}>
                     <Input placeholder="0xBc11295936Aa79d594139de1B2e12629414F3BDB" />
                 </NumberInput>
             </FormControl>
 
             <SimpleGrid columns={2} spacing={5}>
-                <Button disabled>Generate Proof</Button>
+                <Button onClick={() => setShowProof(true)}>
+                    Generate Proof
+                </Button>
 
-                <Button disabled>Download certificate</Button>
+                <Button disabled={!showProof}>Mint certificate</Button>
             </SimpleGrid>
+
+            {showProof && (
+                <Alert
+                    status="success"
+                    variant="subtle"
+                    flexDirection="column"
+                    alignItems="center"
+                    justifyContent="center"
+                    textAlign="center"
+                    height="200px"
+                >
+                    <AlertIcon boxSize="40px" mr={0} />
+                    <AlertTitle mt={4} mb={1} fontSize="lg">
+                        Proof generated!
+                    </AlertTitle>
+                    <AlertDescription maxWidth="sm">
+                        5dsdf436sfg346s34sgf43{' '}
+                        <IconButton
+                            aria-label="copy"
+                            colorScheme={'green'}
+                            size={'xs'}
+                            variant="outline"
+                            icon={<CopyIcon />}
+                        />
+                    </AlertDescription>
+                </Alert>
+            )}
         </Stack>
     );
 }
