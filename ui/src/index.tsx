@@ -4,13 +4,26 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ChakraProvider, Container } from '@chakra-ui/react';
+import {
+    ApolloClient,
+    ApolloProvider,
+    gql,
+    InMemoryCache,
+} from '@apollo/client';
+
+const client = new ApolloClient({
+    uri: 'https://api.thegraph.com/subgraphs/name/centrehq/usdc',
+    cache: new InMemoryCache(),
+});
 
 ReactDOM.render(
     <React.StrictMode>
         <ChakraProvider>
-            <Container>
-                <App />
-            </Container>
+            <ApolloProvider client={client}>
+                <Container>
+                    <App />
+                </Container>
+            </ApolloProvider>
         </ChakraProvider>
     </React.StrictMode>,
     document.getElementById('root'),

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import {
@@ -17,21 +17,71 @@ import {
     SimpleGrid,
     Stack,
 } from '@chakra-ui/react';
+import { gql, useLazyQuery, useQuery } from '@apollo/client';
+
+// const QUERY = gql`
+//     query GetGreeting($language: String!) {
+//         greeting(language: $language) {
+//             message
+//         }
+//     }
+// `;
+//
+// const QUERY = gql`
+//     query GetUsers($language: String!) {
+//         users(first: 200, where: {balance_gt: $balance_gt, balance_lt: $balance_lt}) {
+//             address
+//             balance
+//         }
+//     }
+// `;
+
+const QUERY = gql`
+    query GetUsers {
+        users(first: 200, where: { balance_gt: 100, balance_lt: 500 }) {
+            address
+            balance
+        }
+    }
+`;
+
+// {
+//     users(first: 200, where: {balance_gt: 100, balance_lt: 500}) {
+//     address
+//     balance
+// }
+// }
 
 function App() {
+    const [setMinBalance, minBalance] = useState();
+    const [setMaxBalance, maxBalance] = useState();
+
+    // const [searchPosts, { data }] = useLazyQuery(SEARCH_POSTS, {
+    //     variables: { balance_gt: minBalance, balance_lt: maxBalance },
+    // });
+
+    const { loading, error, data } = useQuery(QUERY);
+
+    console.log(loading);
+    console.log(data);
+
     return (
         <Stack>
             <Heading>Zero-Knowladge Proof of Membership</Heading>
             <FormControl id="amount" isRequired>
-                <FormLabel>Min USD Balance</FormLabel>
-                <NumberInput defaultValue={100} min={0}>
+                <FormLabel>Min USD Balance {setMinBalance}</FormLabel>
+                <NumberInput
+                    defaultValue={100}
+                    min={0}
+                    onChange={(e: any) => minBalance(e)}
+                >
                     <NumberInputField />
                 </NumberInput>
             </FormControl>
 
             <FormControl id="amount">
                 <FormLabel>Max USDC Balance</FormLabel>
-                <NumberInput min={0}>
+                <NumberInput min={0} onChange={(e: any) => maxBalance(e)}>
                     <NumberInputField />
                 </NumberInput>
             </FormControl>
