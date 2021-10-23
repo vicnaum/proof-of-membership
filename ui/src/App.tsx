@@ -36,9 +36,21 @@ import { gql, useLazyQuery, useQuery } from '@apollo/client';
 //     }
 // `;
 
+// const QUERY = gql`
+//     query GetUsers {
+//         users(first: 200, where: { balance_gt: 100, balance_lt: 500 }) {
+//             address
+//             balance
+//         }
+//     }
+// `;
+
 const QUERY = gql`
-    query GetUsers {
-        users(first: 200, where: { balance_gt: 100, balance_lt: 500 }) {
+    query GetUsers($balance_gt: String!, $balance_lt: String!) {
+        users(
+            first: 200
+            where: { balance_gt: $balance_gt, balance_lt: $balance_lt }
+        ) {
             address
             balance
         }
@@ -53,16 +65,16 @@ const QUERY = gql`
 // }
 
 function App() {
-    const [setMinBalance, minBalance] = useState();
-    const [setMaxBalance, maxBalance] = useState();
+    const [minBalance, setMinBalance] = useState();
+    const [maxBalance, setMaxBalance] = useState();
 
-    // const [searchPosts, { data }] = useLazyQuery(SEARCH_POSTS, {
-    //     variables: { balance_gt: minBalance, balance_lt: maxBalance },
-    // });
+    const { data } = useQuery(QUERY, {
+        variables: { balance_gt: minBalance, balance_lt: maxBalance },
+    });
 
-    const { loading, error, data } = useQuery(QUERY);
+    // const { loading, error, data } = useQuery(QUERY);
 
-    console.log(loading);
+    // console.log(loading);
     console.log(data);
 
     return (
@@ -73,7 +85,7 @@ function App() {
                 <NumberInput
                     defaultValue={100}
                     min={0}
-                    onChange={(e: any) => minBalance(e)}
+                    onChange={(e: any) => setMinBalance(e)}
                 >
                     <NumberInputField />
                 </NumberInput>
@@ -81,7 +93,7 @@ function App() {
 
             <FormControl id="amount">
                 <FormLabel>Max USDC Balance</FormLabel>
-                <NumberInput min={0} onChange={(e: any) => maxBalance(e)}>
+                <NumberInput min={0} onChange={(e: any) => setMaxBalance(e)}>
                     <NumberInputField />
                 </NumberInput>
             </FormControl>
