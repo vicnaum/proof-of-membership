@@ -86,9 +86,9 @@ function App() {
 
     return (
         <Stack>
-            <Heading>Zero-Knowladge Proof of Membership</Heading>
+            <Heading>Zero-Knowledge Proof of Membership</Heading>
             <FormControl id="amount" isRequired>
-                <FormLabel>Min USD Balance {setMinBalance}</FormLabel>
+                <FormLabel>Minimum USDC Balance {setMinBalance}</FormLabel>
                 <NumberInput
                     defaultValue={100}
                     min={0}
@@ -99,14 +99,14 @@ function App() {
             </FormControl>
 
             <FormControl id="amount">
-                <FormLabel>Max USDC Balance</FormLabel>
+                <FormLabel>Maximum USDC Balance</FormLabel>
                 <NumberInput min={0} onChange={(e: any) => setMaxBalance(e)}>
                     <NumberInputField />
                 </NumberInput>
             </FormControl>
 
             <FormControl id="amount">
-                <FormLabel>Address Set Size</FormLabel>
+                <FormLabel>Size of Address Set</FormLabel>
                 <NumberInput defaultValue={200} min={1}>
                     <NumberInputField />
                     <NumberInputStepper>
