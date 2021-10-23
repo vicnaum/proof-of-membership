@@ -84,14 +84,17 @@ function App() {
 
     return (
         <Stack>
-            <Image url="./logo.svg" />
             <img src="./logo.svg" alt="" />
 
             <FormControl id="min" isRequired>
-                <FormLabel>Minimum USDC Balance {setMinBalance}</FormLabel>
+                <FormLabel mt={10}>
+                    Minimum USDC Balance {setMinBalance}
+                </FormLabel>
                 <NumberInput
                     defaultValue={100}
                     min={0}
+                    color={'tomato'}
+                    variant="filled"
                     onChange={(e: any) => setMinBalance(e)}
                 >
                     <NumberInputField />
@@ -100,14 +103,24 @@ function App() {
 
             <FormControl id="max">
                 <FormLabel>Maximum USDC Balance</FormLabel>
-                <NumberInput min={0} onChange={(e: any) => setMaxBalance(e)}>
+                <NumberInput
+                    color={'tomato'}
+                    variant="filled"
+                    min={0}
+                    onChange={(e: any) => setMaxBalance(e)}
+                >
                     <NumberInputField />
                 </NumberInput>
             </FormControl>
 
             <FormControl id="address">
                 <FormLabel>Size of Address Set</FormLabel>
-                <NumberInput defaultValue={200} min={1}>
+                <NumberInput
+                    color={'tomato'}
+                    variant="filled"
+                    defaultValue={200}
+                    min={1}
+                >
                     <NumberInputField />
                     <NumberInputStepper>
                         <NumberIncrementStepper />
@@ -118,13 +131,21 @@ function App() {
 
             <FormControl id="amount">
                 <FormLabel>Your address</FormLabel>
-                <NumberInput min={0}>
-                    <Input placeholder="0xBc11295936Aa79d594139de1B2e12629414F3BDB" />
+                <NumberInput min={0} mb={10}>
+                    <Input
+                        color={'tomato'}
+                        variant="filled"
+                        placeholder="0xBc11295936Aa79d594139de1B2e12629414F3BDB"
+                    />
                 </NumberInput>
             </FormControl>
 
             <SimpleGrid columns={2} spacing={5}>
-                <Button onClick={() => setShowProof(true)}>
+                <Button
+                    variant="solid"
+                    color={'tomato'}
+                    onClick={() => setShowProof(true)}
+                >
                     Generate Proof
                 </Button>
 
@@ -140,7 +161,6 @@ function App() {
                     justifyContent="center"
                     textAlign="center"
                     height="200px"
-                    mt={20}
                 >
                     <AlertIcon boxSize="40px" mr={0} />
                     <AlertTitle mt={4} mb={1} fontSize="lg">
