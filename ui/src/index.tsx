@@ -14,6 +14,8 @@ const client = new ApolloClient({
     cache: new InMemoryCache(),
 });
 
+console.log('process.env.PUBLIC_URL', process.env.PUBLIC_URL);
+
 ReactDOM.render(
     <React.StrictMode>
         <ChakraProvider>
@@ -27,7 +29,9 @@ ReactDOM.render(
                         <Container>
                             <Stack>
                                 <img src="./logo.svg" alt="" />
-                                <BrowserRouter>
+                                <BrowserRouter
+                                    basename={process.env.PUBLIC_URL}
+                                >
                                     <Switch>
                                         <Route path="/:proofHash">
                                             <ProofSet />

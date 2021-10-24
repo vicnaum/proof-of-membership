@@ -22,26 +22,7 @@ import { gql, useLazyQuery } from '@apollo/client';
 import { CopyIcon } from '@chakra-ui/icons';
 import Certificate from './Certificate';
 import { postAddressSet, postAddressSetBody } from './postAddressSet';
-import { utils } from 'ethers';
-
-//
-// const QUERY = gql`
-//     query GetUsers($language: String!) {
-//         users(first: 200, where: {balance_gt: $balance_gt, balance_lt: $balance_lt}) {
-//             address
-//             balance
-//         }
-//     }
-// `;
-
-// const QUERY = gql`
-//     query GetUsers {
-//         users(first: "200", where: { balance_gt: "100", balance_lt: "500" }) {
-//             address
-//             balance
-//         }
-//     }
-// `;
+import { ethers, utils } from 'ethers';
 
 const QUERY = gql`
     query GetUsers($balance_gt: Int!, $balance_lt: Int!, $size: Int!) {
@@ -55,14 +36,7 @@ const QUERY = gql`
     }
 `;
 
-// {
-//     users(first: 200, where: {balance_gt: 100, balance_lt: 500}) {
-//     address
-//     balance
-// }
-// }
-
-function App() {
+const App = () => {
     const [minBalance, setMinBalance] = useState<number>(100);
     const [maxBalance, setMaxBalance] = useState<number>(200);
     const [size, setSize] = useState<number>(200);
@@ -73,13 +47,20 @@ function App() {
         postAddressSetBody | any
     >({});
 
-    // const { data, loading } = useQuery(QUERY, {
-    //     variables: {
-    //         balance_gt: minBalance,
-    //         balance_lt: maxBalance,
-    //         size: size,
-    //     },
-    // });
+    // @ts-ignore
+    const provider = new ethers.providers.Web3Provider(window?.ethereum);
+    const signer = provider.getSigner();
+    // @ts-ignore
+    const accounts = window?.ethereum
+        ?.request({
+            method: 'eth_requestAccounts',
+        })
+        .then(() => {
+            console.log('accounts', accounts[0]);
+            if (accounts.length && typeof accounts[0] === 'string') {
+                // return accounts[0];
+            }
+        });
 
     const [getUsers, { data, loading }] = useLazyQuery(QUERY, {
         fetchPolicy: 'network-only',
@@ -240,6 +221,7 @@ function App() {
                 <Button
                     variant="solid"
                     colorScheme="orange"
+                    isLoading={loading}
                     onClick={() =>
                         getUsers({
                             variables: {
@@ -301,6 +283,6 @@ function App() {
             />
         </Stack>
     );
-}
+};
 
 export default App;
