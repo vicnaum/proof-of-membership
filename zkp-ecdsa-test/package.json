@@ -1,0 +1,19 @@
+{
+  "name": "zkp-ecdsa-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Marcello Bardus <marcello@bardus.it>",
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/zkp-ecdsa": "https://github.com/marcellobardus/zkp-ecdsa",
+    "ethers": "^5.5.1",
+    "noble-secp256k1": "^1.2.14",
+    "node-webcrypto-shim": "^0.0.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.3.1",
+    "tsc": "^2.0.3",
+    "typescript": "^4.4.4"
+  },
+  "type": "module"
+}
