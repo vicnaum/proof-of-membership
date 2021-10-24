@@ -3,18 +3,11 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { Box, ChakraProvider, Container, Flex } from '@chakra-ui/react';
-import {
-    ApolloClient,
-    ApolloProvider,
-    gql,
-    InMemoryCache,
-} from '@apollo/client';
-import {
-    HyperThemeEditor,
-    ThemeEditorProvider,
-} from '@hypertheme-editor/chakra-ui';
+import { Box, ChakraProvider, Container, Flex, Stack } from '@chakra-ui/react';
+import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
 import Footer from './Footer';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import ProofSet from './ProofSet';
 
 const client = new ApolloClient({
     uri: 'https://api.thegraph.com/subgraphs/name/centrehq/usdc',
@@ -32,7 +25,19 @@ ReactDOM.render(
                 >
                     <Box bgGradient="linear(to-b, orange.50, transparent)">
                         <Container>
-                            <App />
+                            <Stack>
+                                <img src="./logo.svg" alt="" />
+                                <BrowserRouter>
+                                    <Switch>
+                                        <Route path="/:proofHash">
+                                            <ProofSet />
+                                        </Route>
+                                        <Route path="/">
+                                            <App />
+                                        </Route>
+                                    </Switch>
+                                </BrowserRouter>
+                            </Stack>
                         </Container>
                     </Box>
                     <Footer />

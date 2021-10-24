@@ -10,8 +10,11 @@ import {
     ModalOverlay,
 } from '@chakra-ui/react';
 import QRCode from 'react-qr-code';
+import { useHistory } from 'react-router-dom';
 
 const Certificate = ({ isOpen, isClose, membershipProof }: any) => {
+    let history = useHistory();
+
     return (
         <Modal isOpen={isOpen} onClose={isClose}>
             <ModalOverlay />
@@ -26,7 +29,12 @@ const Certificate = ({ isOpen, isClose, membershipProof }: any) => {
                 </ModalBody>
 
                 <ModalFooter>
-                    <Button variant="ghost">Print</Button>
+                    <Button
+                        variant="ghost"
+                        onClick={() => history.push(`/${membershipProof}`)}
+                    >
+                        Print
+                    </Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>

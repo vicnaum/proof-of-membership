@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import {
     Alert,
@@ -8,7 +8,6 @@ import {
     Button,
     FormControl,
     FormLabel,
-    Heading,
     IconButton,
     Input,
     NumberDecrementStepper,
@@ -18,19 +17,13 @@ import {
     NumberInputStepper,
     SimpleGrid,
     Stack,
-    Image,
 } from '@chakra-ui/react';
-import { gql, useQuery } from '@apollo/client';
+import { gql, useLazyQuery } from '@apollo/client';
 import { CopyIcon } from '@chakra-ui/icons';
 import Certificate from './Certificate';
+import { postAddressSet, postAddressSetBody } from './postAddressSet';
+import { utils } from 'ethers';
 
-// const QUERY = gql`
-//     query GetGreeting($language: String!) {
-//         greeting(language: $language) {
-//             message
-//         }
-//     }
-// `;
 //
 // const QUERY = gql`
 //     query GetUsers($language: String!) {
@@ -43,7 +36,7 @@ import Certificate from './Certificate';
 
 // const QUERY = gql`
 //     query GetUsers {
-//         users(first: 200, where: { balance_gt: 100, balance_lt: 500 }) {
+//         users(first: "200", where: { balance_gt: "100", balance_lt: "500" }) {
 //             address
 //             balance
 //         }
@@ -51,9 +44,9 @@ import Certificate from './Certificate';
 // `;
 
 const QUERY = gql`
-    query GetUsers($balance_gt: String!, $balance_lt: String!) {
+    query GetUsers($balance_gt: Int!, $balance_lt: Int!, $size: Int!) {
         users(
-            first: 200
+            first: $size
             where: { balance_gt: $balance_gt, balance_lt: $balance_lt }
         ) {
             address
@@ -70,35 +63,123 @@ const QUERY = gql`
 // }
 
 function App() {
-    const [minBalance, setMinBalance] = useState();
-    const [maxBalance, setMaxBalance] = useState();
+    const [minBalance, setMinBalance] = useState<number>(100);
+    const [maxBalance, setMaxBalance] = useState<number>(200);
+    const [size, setSize] = useState<number>(200);
     const [showProof, setShowProof] = useState(false);
     const [showCertificate, setShowCertificate] = useState(false);
     const [membershipProof, setMembershipProof] = useState('345345tsdfga');
+    const [proofElements, setProofElements] = useState<
+        postAddressSetBody | any
+    >({});
 
-    const { data } = useQuery(QUERY, {
-        variables: { balance_gt: minBalance, balance_lt: maxBalance },
+    // const { data, loading } = useQuery(QUERY, {
+    //     variables: {
+    //         balance_gt: minBalance,
+    //         balance_lt: maxBalance,
+    //         size: size,
+    //     },
+    // });
+
+    const [getUsers, { data, loading }] = useLazyQuery(QUERY, {
+        fetchPolicy: 'network-only',
     });
 
-    // const { loading, error, data } = useQuery(QUERY);
+    useEffect(() => {
+        console.log('data', data);
+        if (data) {
+            const set: postAddressSetBody = {
+                proofHash: 'dfsdf',
+                minUsdc: minBalance,
+                maxUsdc: maxBalance,
+                setSize: size,
+                addressSet: { data },
+            };
 
-    // console.log(loading);
-    console.log(data);
+            const requestOptions = {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            console.log('data', data);
+            const accountTx = new Map<string, string>();
+            const txAccount = new Map<string, string>();
+            const retrieveTxnsPromises: Promise<any>[] = data.users.map(
+                (row: any) =>
+                    fetch(
+                        `https://api.etherscan.io/api?module=account&action=txlist&address=${row.address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=9SQ26N4VERJTXBWXQ4H94X4X98UZ4VFPHB`,
+                        requestOptions,
+                    ).then(async (response) => {
+                        const res = await response.json();
+                        accountTx.set(row.address, res.result[0].hash);
+                        txAccount.set(res.result[0].hash, row.address);
+                    }),
+            );
+            // {"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0x773b94e1e2381f0c1f0b366245145a31369a7311e53778e4b085a203c64f19a3"],"id":0}
+            (async () => {
+                const responses = await Promise.all(retrieveTxnsPromises);
+                const accountPubKey = new Map<string, string>();
+                // @ts-ignore
+                const txHashesNeeded = [...accountTx.keys()].map((acc) => {
+                    return accountTx.get(acc)!;
+                });
+
+                const jsonRpcRequests = txHashesNeeded.map((hash, id) => {
+                    return `{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${hash}"],"id":${id}}`;
+                });
+
+                console.log('[' + jsonRpcRequests + ']');
+
+                // @ts-ignore
+                const rpcResponse = fetch(
+                    'https://eth-mainnet.alchemyapi.io/v2/wCzaTDAfLI6S5Mdc2suiOXcpf7Xzlk_w',
+                    {
+                        method: 'POST',
+                        body: '[' + jsonRpcRequests + ']',
+                    },
+                )
+                    .then((res: any) => res.json())
+                    .then((data: any) => {
+                        console.log(data);
+
+                        data.map((entity: any) => {
+                            const signature = utils.joinSignature({
+                                v: entity.result.v,
+                                r: entity.result.r,
+                                s: entity.result.s,
+                            });
+                            const signer = utils.recoverPublicKey(
+                                entity.result.hash,
+                                signature,
+                            );
+                            console.log(signer);
+                        });
+                    });
+            })();
+
+            // const txToAccount = responses.map((res) => ({
+            //     account: res.data.account,
+            //     txHash: res.data.txns[0].hash,
+            // }));
+
+            postAddressSet(set).then((r: any) => {
+                console.log(r);
+                setMembershipProof(r.metadata.id);
+                setShowProof(true);
+            });
+        }
+    }, [data]);
 
     return (
         <Stack>
-            <img src="./logo.svg" alt="" />
-
             <FormControl id="min" isRequired>
-                <FormLabel mt={10}>
-                    Minimum USDC Balance {setMinBalance}
-                </FormLabel>
+                <FormLabel mt={10}>Minimum USDC Balance</FormLabel>
                 <NumberInput
-                    defaultValue={100}
                     min={0}
                     color={'tomato'}
                     variant="filled"
-                    onChange={(e: any) => setMinBalance(e)}
+                    onChange={(e: string) => setMinBalance(parseInt(e))}
                 >
                     <NumberInputField style={{ fontWeight: 'bold' }} />
                 </NumberInput>
@@ -110,7 +191,7 @@ function App() {
                     color={'tomato'}
                     variant="filled"
                     min={0}
-                    onChange={(e: any) => setMaxBalance(e)}
+                    onChange={(e: string) => setMaxBalance(parseInt(e))}
                 >
                     <NumberInputField style={{ fontWeight: 'bold' }} />
                 </NumberInput>
@@ -121,8 +202,12 @@ function App() {
                 <NumberInput
                     color={'tomato'}
                     variant="filled"
-                    defaultValue={200}
                     min={1}
+                    max={5}
+                    onChange={(e: string) => {
+                        setSize(parseInt(e));
+                        console.log(size);
+                    }}
                 >
                     <NumberInputField />
                     <NumberInputStepper>
@@ -134,7 +219,14 @@ function App() {
 
             <FormControl id="amount">
                 <FormLabel>Your address</FormLabel>
-                <NumberInput min={0} mb={10}>
+                <NumberInput
+                    min={0}
+                    mb={10}
+                    onChange={(e: string) => {
+                        // setSize(parseInt(e));
+                        console.log(e);
+                    }}
+                >
                     <Input
                         color={'tomato'}
                         variant="filled"
@@ -148,14 +240,29 @@ function App() {
                 <Button
                     variant="solid"
                     colorScheme="orange"
-                    onClick={() => setShowProof(true)}
+                    onClick={() =>
+                        getUsers({
+                            variables: {
+                                balance_gt: minBalance,
+                                balance_lt: maxBalance,
+                                size: size,
+                            },
+                        })
+                    }
                 >
                     Generate Proof
                 </Button>
 
                 <Button
                     disabled={!showProof}
-                    onClick={() => setShowCertificate(true)}
+                    onClick={() => {
+                        setProofElements({
+                            minBalance: minBalance,
+                            maxBalance: maxBalance,
+                            size: size,
+                        });
+                        setShowCertificate(true);
+                    }}
                 >
                     Mint certificate
                 </Button>
@@ -176,7 +283,7 @@ function App() {
                         Proof generated!
                     </AlertTitle>
                     <AlertDescription maxWidth="sm">
-                        {membershipProof}{' '}
+                        {membershipProof} {console.log(proofElements)}
                         <IconButton
                             aria-label="copy"
                             colorScheme={'green'}
