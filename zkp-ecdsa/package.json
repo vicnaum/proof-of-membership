@@ -55,6 +55,7 @@
         "format": "prettier './(src|test|bench)/**/*.ts' --write"
     },
     "dependencies": {
+        "ethers": "^5.5.1",
         "typedjson": "^1.7.0"
     }
 }

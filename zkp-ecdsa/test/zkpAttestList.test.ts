@@ -18,27 +18,33 @@ import {
     SignatureProofList,
     SystemParametersList,
     generateParamsList,
-    keyToInt,
+    keyToIntFromEthers,
     proveSignatureList,
     verifySignatureList,
 } from '../src/zkpAttestList.js'
 
+import { Wallet, utils } from "ethers";
+
 import { serdeTest } from './serde.test.js'
 
 export async function testZKP(): Promise<boolean> {
-    const keyPair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']),
-        enc = new TextEncoder(),
-        msg = enc.encode('kilroy was here'),
-        msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', msg)),
-        signature = new Uint8Array(
-            await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, keyPair.privateKey!, msg)
-        ),
-        testKey = await keyToInt(keyPair.publicKey!),
-        testArray = [testKey, BigInt(4), BigInt(5), BigInt(6), BigInt(7), BigInt(8)],
-        params = generateParamsList(),
-        pkBytes = new Uint8Array(await crypto.subtle.exportKey('raw', keyPair.publicKey!)),
-        proof = await proveSignatureList(params, msgHash, signature, pkBytes, 0, testArray),
-        res = await verifySignatureList(params, msgHash, testArray, proof)
+    const msg = new TextEncoder().encode("kilroy was here");
+    const msgHash = new Uint8Array(await crypto.subtle.digest("SHA-256", msg));
+  
+    const wallet = Wallet.createRandom();
+  
+    const secp256k1SigningKey = new utils.SigningKey(wallet.privateKey);
+    const sig = secp256k1SigningKey.signDigest(msgHash);
+    const signature = hexStringToArrayBuffer(utils.joinSignature(sig));
+
+    const testKey = await keyToIntFromEthers(wallet.publicKey)
+
+    const testArray = [testKey, BigInt(4), BigInt(5), BigInt(6), BigInt(7), BigInt(8)]
+    const params = generateParamsList()
+    const pkBytes = hexStringToArrayBuffer(wallet.publicKey);
+
+    const proof = await proveSignatureList(params, msgHash, signature, pkBytes, 0, testArray)
+    const res = await verifySignatureList(params, msgHash, testArray, proof)
     if (!res) {
         return false
     }
@@ -53,3 +59,34 @@ export async function testZKP(): Promise<boolean> {
 
     return true
 }
+
+export function hexStringToArrayBuffer(hexString) {
+    // remove the leading 0x
+    hexString = hexString.replace(/^0x/, "");
+  
+    // ensure even number of characters
+    if (hexString.length % 2 != 0) {
+      console.log(
+        "WARNING: expecting an even number of characters in the hexString"
+      );
+    }
+  
+    // check for some non-hex characters
+    var bad = hexString.match(/[G-Z\s]/i);
+    if (bad) {
+      console.log("WARNING: found non-hex characters", bad);
+    }
+  
+    // split the string into pairs of octets
+    var pairs = hexString.match(/[\dA-F]{2}/gi);
+  
+    // convert the octets to integers
+    var integers = pairs.map(function (s) {
+      return parseInt(s, 16);
+    });
+  
+    var array = new Uint8Array(integers);
+  
+    return array;
+  }
+  
