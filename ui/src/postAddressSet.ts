@@ -1,8 +1,8 @@
 export interface postAddressSetBody {
     proofHash: string;
-    minUsdc: number;
-    maxUsdc: number;
-    setSize: number;
+    minUsdc: number | undefined;
+    maxUsdc: number | undefined;
+    setSize: number | undefined;
     addressSet: Object;
 }
 

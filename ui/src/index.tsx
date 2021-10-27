@@ -28,7 +28,10 @@ ReactDOM.render(
                     <Box bgGradient="linear(to-b, orange.50, transparent)">
                         <Container>
                             <Stack>
-                                <img src="./logo.svg" alt="" />
+                                <img
+                                    src={`${process.env.PUBLIC_URL}/logo.svg`}
+                                    alt=""
+                                />
                                 <BrowserRouter
                                     basename={process.env.PUBLIC_URL}
                                 >

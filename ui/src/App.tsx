@@ -37,9 +37,10 @@ const QUERY = gql`
 `;
 
 const App = () => {
-    const [minBalance, setMinBalance] = useState<number>(100);
-    const [maxBalance, setMaxBalance] = useState<number>(200);
-    const [size, setSize] = useState<number>(200);
+    const [message, setMessage] = useState<string>('');
+    const [minBalance, setMinBalance] = useState<number | undefined>();
+    const [maxBalance, setMaxBalance] = useState<number | undefined>();
+    const [size, setSize] = useState<number | undefined>();
     const [showProof, setShowProof] = useState(false);
     const [showCertificate, setShowCertificate] = useState(false);
     const [membershipProof, setMembershipProof] = useState('345345tsdfga');
@@ -155,7 +156,19 @@ const App = () => {
     return (
         <Stack>
             <FormControl id="min" isRequired>
-                <FormLabel mt={10}>Minimum USDC Balance</FormLabel>
+                <FormLabel mt={10}>Message</FormLabel>
+                <Input
+                    min={0}
+                    color={'tomato'}
+                    variant="filled"
+                    placeholder="Alice proofs Bob that she owns 100 USDC"
+                    onChange={(e: any) => setMessage(e.target.value)}
+                    style={{ fontWeight: 'bold' }}
+                />
+            </FormControl>
+
+            <FormControl id="min" isRequired>
+                <FormLabel>Minimum USDC Balance</FormLabel>
                 <NumberInput
                     min={0}
                     color={'tomato'}
@@ -166,7 +179,7 @@ const App = () => {
                 </NumberInput>
             </FormControl>
 
-            <FormControl id="max">
+            <FormControl id="max" isRequired>
                 <FormLabel>Maximum USDC Balance</FormLabel>
                 <NumberInput
                     color={'tomato'}
@@ -178,7 +191,7 @@ const App = () => {
                 </NumberInput>
             </FormControl>
 
-            <FormControl id="address">
+            <FormControl id="address" isRequired>
                 <FormLabel>Size of Address Set</FormLabel>
                 <NumberInput
                     color={'tomato'}
@@ -198,7 +211,7 @@ const App = () => {
                 </NumberInput>
             </FormControl>
 
-            <FormControl id="amount">
+            <FormControl id="amount" isRequired>
                 <FormLabel>Your address</FormLabel>
                 <NumberInput
                     min={0}
@@ -220,6 +233,12 @@ const App = () => {
             <SimpleGrid columns={2} spacing={5}>
                 <Button
                     variant="solid"
+                    disabled={
+                        message.length === 0 ||
+                        !minBalance ||
+                        !maxBalance ||
+                        !size
+                    }
                     colorScheme="orange"
                     isLoading={loading}
                     onClick={() =>
