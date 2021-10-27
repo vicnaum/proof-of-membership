@@ -1,7 +1,7 @@
 {
     "name": "ui",
     "version": "0.1.0",
-    "private": false,
+    "private": true,
     "homepage": "https://vicnaum.github.io/proof-of-membership",
     "dependencies": {
         "@apollo/client": "^3.4.16",
@@ -33,7 +33,7 @@
         "web-vitals": "^1.0.1"
     },
     "scripts": {
-        "start": "react-scripts start",
+        "start": "react-app-rewired start",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",

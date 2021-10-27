@@ -23,19 +23,11 @@ import { CopyIcon } from '@chakra-ui/icons';
 import Certificate from './Certificate';
 import { postAddressSet, postAddressSetBody } from './postAddressSet';
 import { ethers, utils } from 'ethers';
-// import {
-//     generateParamsList,
-//     proveSignatureList,
-//     verifySignatureList,
-// } from '../../zkp-ecdsa/lib/src/index.js';
-// import { hexStringToArrayBuffer } from '../../zkp-ecdsa-test/utils/hex-to-uint8-array';
-
 import {
     generateParamsList,
     proveSignatureList,
-    verifySignatureList,
 } from '@zkp-ecdsa/lib/src/index.js';
-import { hexStringToArrayBuffer } from '@zkp-ecdsa-test/utils/hex-to-uint8-array';
+import { hexStringToArrayBuffer } from '@zkp-ecdsa/utils/hex-to-uint8-array';
 
 const QUERY = gql`
     query GetUsers($balance_gt: Int!, $balance_lt: Int!, $size: Int!) {

@@ -3,8 +3,7 @@
         "target": "ES6",
         "baseUrl": ".",
         "paths": {
-            "@zkp-ecdsa/*": ["../../zkp-ecdsa/*"],
-            "@zkp-ecdsa-test/*": ["../../zkp-ecdsa-test/*"],
+            "@zkp-ecdsa/*": ["./zkp-ecdsa/*"]
         }
     }
 }

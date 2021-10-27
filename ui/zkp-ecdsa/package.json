@@ -25,7 +25,7 @@
         "tsconfig.json"
     ],
     "license": "Apache-2.0",
-    "private": false,
+    "private": true,
     "devDependencies": {
         "0x": "^4.10.2",
         "@types/benchmark": "^1.0.33",
