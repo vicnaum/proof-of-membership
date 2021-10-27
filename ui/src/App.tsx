@@ -60,121 +60,130 @@ const App = () => {
     // @ts-ignore
     const provider = new ethers.providers.Web3Provider(window?.ethereum);
     const signer = provider.getSigner();
-    // @ts-ignore
-    window?.ethereum
-        ?.request({
-            method: 'eth_requestAccounts',
-        })
-        .then((accounts: any) => {
-            console.log('accounts', accounts);
-            if (accounts.length && typeof accounts[0] === 'string') {
-                setAccountConnected(accounts[0]);
-            }
-        });
+
+    useEffect(() => {
+        // @ts-ignore
+        window?.ethereum
+            ?.request({
+                method: 'eth_requestAccounts',
+            })
+            .then((accounts: any) => {
+                console.log('accounts', accounts);
+                if (accounts.length && typeof accounts[0] === 'string') {
+                    setAccountConnected(accounts[0]);
+                }
+            });
+    }, []);
 
     const [getUsers, { data, loading }] = useLazyQuery(QUERY, {
         fetchPolicy: 'network-only',
     });
 
+    const retrieveTxnsPromises = async (): Promise<any> => {
+        const requestOptions = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        };
+
+        const accountTx = new Map<string, string>();
+        const txAccount = new Map<string, string>();
+        const promisess: Promise<any>[] = data.users.map((row: any) =>
+            fetch(
+                `https://api.etherscan.io/api?module=account&action=txlist&address=${row.address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=9SQ26N4VERJTXBWXQ4H94X4X98UZ4VFPHB`,
+                requestOptions,
+            ).then(async (response) => {
+                const res = await response.json();
+                accountTx.set(row.address, res.result[0].hash);
+                txAccount.set(res.result[0].hash, row.address);
+            }),
+        );
+
+        const responses = await Promise.all(promisess);
+        const accountPubKey = new Map<string, string>();
+        // @ts-ignore
+        return [...accountTx.keys()].map((acc) => {
+            return accountTx.get(acc)!;
+        });
+    };
+
+    const getWalletTxns = async (): Promise<any> => {
+        const txns = await retrieveTxnsPromises();
+
+        const jsonRpcRequests = txns.map((hash: string, id: number) => {
+            return `{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${hash}"],"id":${id}}`;
+        });
+
+        await (
+            await fetch(
+                'https://eth-mainnet.alchemyapi.io/v2/wCzaTDAfLI6S5Mdc2suiOXcpf7Xzlk_w',
+                {
+                    method: 'POST',
+                    body: '[' + jsonRpcRequests + ']',
+                },
+            )
+        ).json();
+    };
+
+    const getWallets = async () => {
+        const pubKeys = (await getWalletTxns()).map((entity: any) => {
+            const signature = utils.joinSignature({
+                v: entity.result.v,
+                r: entity.result.r,
+                s: entity.result.s,
+            });
+            const signer = utils.recoverPublicKey(
+                entity.result.hash,
+                signature,
+            );
+            return signer;
+        });
+        setFoundSetPublicKeys(pubKeys);
+        // @ts-ignore
+        const [pubKey] = window.ethereum
+            .request({
+                method: 'eth_getEncryptionPublicKey',
+                params: [[0]],
+            })
+            .then(() => {
+                setUserPubKey(pubKey);
+                // @ts-ignore
+                const sig = window?.ethereum
+                    .request({
+                        method: 'eth_sign',
+                        params: [pubKey],
+                    })
+                    .then(async () => {
+                        setSignature(sig);
+                        await generateProof();
+                    });
+            });
+    };
+
     useEffect(() => {
         console.log('data', data);
         if (data) {
-            const set: postAddressSetBody = {
-                proofHash: 'dfsdf',
-                minUsdc: minBalance,
-                maxUsdc: maxBalance,
-                setSize: size,
-                addressSet: { data },
-            };
-
-            const requestOptions = {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            };
-            console.log('data', data);
-            const accountTx = new Map<string, string>();
-            const txAccount = new Map<string, string>();
-            const retrieveTxnsPromises: Promise<any>[] = data.users.map(
-                (row: any) =>
-                    fetch(
-                        `https://api.etherscan.io/api?module=account&action=txlist&address=${row.address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=9SQ26N4VERJTXBWXQ4H94X4X98UZ4VFPHB`,
-                        requestOptions,
-                    ).then(async (response) => {
-                        const res = await response.json();
-                        accountTx.set(row.address, res.result[0].hash);
-                        txAccount.set(res.result[0].hash, row.address);
-                    }),
-            );
-            // {"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0x773b94e1e2381f0c1f0b366245145a31369a7311e53778e4b085a203c64f19a3"],"id":0}
-            (async () => {
-                const responses = await Promise.all(retrieveTxnsPromises);
-                const accountPubKey = new Map<string, string>();
-                // @ts-ignore
-                const txHashesNeeded = [...accountTx.keys()].map((acc) => {
-                    return accountTx.get(acc)!;
+            getWallets().then(() => {
+                const set: postAddressSetBody = {
+                    proofHash: 'dfsdf',
+                    minUsdc: minBalance,
+                    maxUsdc: maxBalance,
+                    setSize: size,
+                    addressSet: { data },
+                };
+                postAddressSet(set).then((r: any) => {
+                    console.log(r);
+                    setMembershipProof(r.metadata.id);
+                    setShowProof(true);
                 });
-
-                const jsonRpcRequests = txHashesNeeded.map((hash, id) => {
-                    return `{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${hash}"],"id":${id}}`;
-                });
-
-                console.log('[' + jsonRpcRequests + ']');
-
-                // @ts-ignore
-                const rpcResponse = fetch(
-                    'https://eth-mainnet.alchemyapi.io/v2/wCzaTDAfLI6S5Mdc2suiOXcpf7Xzlk_w',
-                    {
-                        method: 'POST',
-                        body: '[' + jsonRpcRequests + ']',
-                    },
-                )
-                    .then((res: any) => res.json())
-                    .then((data: any) => {
-                        const pubKeys = data.map((entity: any) => {
-                            const signature = utils.joinSignature({
-                                v: entity.result.v,
-                                r: entity.result.r,
-                                s: entity.result.s,
-                            });
-                            const signer = utils.recoverPublicKey(
-                                entity.result.hash,
-                                signature,
-                            );
-                            return signer;
-                        });
-                        setFoundSetPublicKeys(pubKeys);
-                        // @ts-ignore
-                        const [pubKey] = window.ethereum
-                            .request({
-                                method: 'eth_getEncryptionPublicKey',
-                                params: [[0]],
-                            })
-                            .then(() => {
-                                setUserPubKey(pubKey);
-                                // @ts-ignore
-                                const sig = window?.ethereum
-                                    .request({
-                                        method: 'eth_sign',
-                                        params: [pubKey],
-                                    })
-                                    .then(() => {
-                                        setSignature(sig);
-                                    });
-                            });
-                    });
-            })();
-
-            postAddressSet(set).then((r: any) => {
-                console.log(r);
-                setMembershipProof(r.metadata.id);
-                setShowProof(true);
             });
         }
     }, [data]);
 
     const generateProof = async () => {
+        console.log('signature', signature);
+        console.log('userPubKey', userPubKey);
         const proofsParamsList = generateParamsList();
         const proof = proveSignatureList(
             proofsParamsList,
@@ -288,7 +297,7 @@ const App = () => {
                                 size: size,
                             },
                         });
-                        await generateProof();
+                        // await generateProof();
                     }}
                 >
                     Generate Proof
