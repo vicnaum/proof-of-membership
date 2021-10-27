@@ -23,6 +23,19 @@ import { CopyIcon } from '@chakra-ui/icons';
 import Certificate from './Certificate';
 import { postAddressSet, postAddressSetBody } from './postAddressSet';
 import { ethers, utils } from 'ethers';
+// import {
+//     generateParamsList,
+//     proveSignatureList,
+//     verifySignatureList,
+// } from '../../zkp-ecdsa/lib/src/index.js';
+// import { hexStringToArrayBuffer } from '../../zkp-ecdsa-test/utils/hex-to-uint8-array';
+
+import {
+    generateParamsList,
+    proveSignatureList,
+    verifySignatureList,
+} from '@zkp-ecdsa/lib/src/index.js';
+import { hexStringToArrayBuffer } from '@zkp-ecdsa-test/utils/hex-to-uint8-array';
 
 const QUERY = gql`
     query GetUsers($balance_gt: Int!, $balance_lt: Int!, $size: Int!) {
@@ -42,6 +55,10 @@ const App = () => {
     const [maxBalance, setMaxBalance] = useState<number | undefined>();
     const [size, setSize] = useState<number | undefined>();
     const [showProof, setShowProof] = useState(false);
+    const [accountConnected, setAccountConnected] = useState('');
+    const [foundSetPublicKeys, setFoundSetPublicKeys] = useState<string[]>([]);
+    const [signature, setSignature] = useState('');
+    const [userPubKey, setUserPubKey] = useState('');
     const [showCertificate, setShowCertificate] = useState(false);
     const [membershipProof, setMembershipProof] = useState('345345tsdfga');
     const [proofElements, setProofElements] = useState<
@@ -52,14 +69,14 @@ const App = () => {
     const provider = new ethers.providers.Web3Provider(window?.ethereum);
     const signer = provider.getSigner();
     // @ts-ignore
-    const accounts = window?.ethereum
+    window?.ethereum
         ?.request({
             method: 'eth_requestAccounts',
         })
-        .then(() => {
-            console.log('accounts', accounts[0]);
+        .then((accounts: any) => {
+            console.log('accounts', accounts);
             if (accounts.length && typeof accounts[0] === 'string') {
-                // return accounts[0];
+                setAccountConnected(accounts[0]);
             }
         });
 
@@ -123,9 +140,7 @@ const App = () => {
                 )
                     .then((res: any) => res.json())
                     .then((data: any) => {
-                        console.log(data);
-
-                        data.map((entity: any) => {
+                        const pubKeys = data.map((entity: any) => {
                             const signature = utils.joinSignature({
                                 v: entity.result.v,
                                 r: entity.result.r,
@@ -135,15 +150,29 @@ const App = () => {
                                 entity.result.hash,
                                 signature,
                             );
-                            console.log(signer);
+                            return signer;
                         });
+                        setFoundSetPublicKeys(pubKeys);
+                        // @ts-ignore
+                        const [pubKey] = window.ethereum
+                            .request({
+                                method: 'eth_getEncryptionPublicKey',
+                                params: [[0]],
+                            })
+                            .then(() => {
+                                setUserPubKey(pubKey);
+                                // @ts-ignore
+                                const sig = window?.ethereum
+                                    .request({
+                                        method: 'eth_sign',
+                                        params: [pubKey],
+                                    })
+                                    .then(() => {
+                                        setSignature(sig);
+                                    });
+                            });
                     });
             })();
-
-            // const txToAccount = responses.map((res) => ({
-            //     account: res.data.account,
-            //     txHash: res.data.txns[0].hash,
-            // }));
 
             postAddressSet(set).then((r: any) => {
                 console.log(r);
@@ -152,6 +181,24 @@ const App = () => {
             });
         }
     }, [data]);
+
+    const generateProof = async () => {
+        const proofsParamsList = generateParamsList();
+        const proof = proveSignatureList(
+            proofsParamsList,
+            hexStringToArrayBuffer(
+                utils.keccak256(
+                    '\x19Ethereum Signed Message:\n' +
+                        userPubKey.length +
+                        userPubKey,
+                ),
+            ),
+            new Uint8Array(signature as any),
+            hexStringToArrayBuffer(userPubKey),
+            foundSetPublicKeys.indexOf(userPubKey) as number,
+            foundSetPublicKeys.map((pubkey) => BigInt(pubkey)),
+        );
+    };
 
     return (
         <Stack>
@@ -241,15 +288,16 @@ const App = () => {
                     }
                     colorScheme="orange"
                     isLoading={loading}
-                    onClick={() =>
+                    onClick={async () => {
                         getUsers({
                             variables: {
                                 balance_gt: minBalance,
                                 balance_lt: maxBalance,
                                 size: size,
                             },
-                        })
-                    }
+                        });
+                        await generateProof();
+                    }}
                 >
                     Generate Proof
                 </Button>
