@@ -108,14 +108,14 @@ const App = () => {
         });
     };
 
-    const getWalletTxns = async (): Promise<any> => {
+    const getWalletsTxns = async (): Promise<any> => {
         const txns = await retrieveTxnsPromises();
 
         const jsonRpcRequests = txns.map((hash: string, id: number) => {
             return `{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${hash}"],"id":${id}}`;
         });
 
-        await (
+        const jsonResult = await (
             await fetch(
                 'https://eth-mainnet.alchemyapi.io/v2/wCzaTDAfLI6S5Mdc2suiOXcpf7Xzlk_w',
                 {
@@ -124,10 +124,14 @@ const App = () => {
                 },
             )
         ).json();
+
+        return jsonResult;
     };
 
     const getWallets = async () => {
-        const pubKeys = (await getWalletTxns()).map((entity: any) => {
+        const walletsTxs = await getWalletsTxns()
+        console.log("walletsTxs", walletsTxs)
+        const pubKeys = walletsTxs.map((entity: any) => {
             const signature = utils.joinSignature({
                 v: entity.result.v,
                 r: entity.result.r,
@@ -139,26 +143,29 @@ const App = () => {
             );
             return signer;
         });
+        console.log("pubKeys:", pubKeys)
         setFoundSetPublicKeys(pubKeys);
         // @ts-ignore
-        const [pubKey] = window.ethereum
+        const [pubKey] = await window.ethereum
             .request({
                 method: 'eth_getEncryptionPublicKey',
-                params: [[0]],
+                params: [accountConnected],
             })
-            .then(() => {
-                setUserPubKey(pubKey);
-                // @ts-ignore
-                const sig = window?.ethereum
+        
+        setUserPubKey(pubKey);
+
+        // @ts-ignore
+        const sig = await window?.ethereum            
                     .request({
                         method: 'eth_sign',
-                        params: [pubKey],
+                        params: [accountConnected, 'aaaa'],
                     })
-                    .then(async () => {
-                        setSignature(sig);
-                        await generateProof();
-                    });
-            });
+        
+        console.log("MM Signature:", sig)
+            
+        setSignature(sig);
+        
+        await generateProof();
     };
 
     useEffect(() => {
