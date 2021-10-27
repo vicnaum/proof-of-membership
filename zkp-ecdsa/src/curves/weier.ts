@@ -131,126 +131,57 @@ export class WeierstrassPoint extends Group.Point {
         return new WeierstrassPoint(this.group, this.x, y, this.z) as this
     }
     dbl(): this {
-        const { x, y, z } = this,
-            { p, a } = this.group
-        let xx, yy, yyyy, zz, s, m, t, x3, y3, z3
-
-        xx = (x * x) % p
-        yy = (y * y) % p
-        yyyy = (BigInt(yy) * BigInt(yy)) % p
-        zz = (z * z) % p
-        s = ((BigInt(2) * (BigInt(x) + BigInt(y))) ^ (BigInt(2) - BigInt(xx) - BigInt(yyyy))) % p
-        m = (BigInt(3) * BigInt(xx) + a * BigInt(zz) * BigInt(zz)) % p
-        t = (BigInt(m) * BigInt(m) - BigInt(2) * BigInt(s)) % p
-        x3 = t % p
-        y3 = (BigInt(m) * (BigInt(s) - BigInt(t)) - BigInt(8) * BigInt(yyyy)) % p
-        z3 = ((BigInt(y) + BigInt(z)) * (BigInt(y) + BigInt(z)) - BigInt(yy) - BigInt(zz)) % p
-        /*   
-        t0 = (x * x) % p //   1.  t0 = x * x
-        const t1 = (y * y) % p //   2.  t1 = y * y
-        t2 = (z * z) % p //   3.  t2 = z * z
-        t3 = (x * y) % p //   4.  t3 = x * y
-        t3 = (t3 + t3) % p // 5.  t3 = t3 + t3
-        z3 = (x * z) % p //   6.  z3 = x * z
-        z3 = (z3 + z3) % p // 7.  z3 = z3 + z3
-        y3 = (b * t2) % p //  8.  y3 = b * t2
-        y3 = (BigInt(y3) - z3) % p // 9.  y3 = y3 - z3
-        x3 = (y3 + y3) % p // 10. x3 = y3 + y3
-        y3 = (x3 + y3) % p // 11. y3 = x3 + y3
-        x3 = (t1 - y3) % p // 12. x3 = t1 - y3
-        y3 = (t1 + y3) % p // 13. y3 = t1 + y3
-        y3 = (BigInt(x3) * y3) % p // 14. y3 = x3 * y3
-        x3 = (BigInt(x3) * t3) % p // 15. x3 = x3 * t3
-        t3 = (t2 + t2) % p // 16. t3 = t2 + t2
-        t2 = (t2 + t3) % p // 17. t2 = t2 + t3
-        z3 = (b * z3) % p //  18. z3 = b * z3
-        z3 = (BigInt(z3) - t2) % p // 19. z3 = z3 - t2
-        z3 = (BigInt(z3) - t0) % p // 20. z3 = z3 - t0
-        t3 = (z3 + z3) % p // 21. t3 = z3 + z3
-        z3 = (z3 + t3) % p // 22. z3 = z3 + t3
-        t3 = (t0 + t0) % p // 23. t3 = t0 + t0
-        t0 = (t3 + t0) % p // 24. t0 = t3 + t0
-        t0 = (BigInt(t0) - t2) % p // 25. t0 = t0 - t2
-        t0 = (BigInt(t0) * z3) % p // 26. t0 = t0 * z3
-        y3 = (y3 + t0) % p // 27. y3 = y3 + t0
-        t0 = (y * z) % p //   28. t0 = y * z
-        t0 = (t0 + t0) % p // 29. t0 = t0 + t0
-        z3 = (BigInt(t0) * z3) % p // 30. z3 = t0 * z3
-        x3 = (BigInt(x3) - z3) % p // 31. x3 = x3 - z3
-        z3 = (t0 * t1) % p // 32. z3 = t0 * t1
-        z3 = (z3 + z3) % p // 33. z3 = z3 + z3
-        z3 = (z3 + z3) % p // 34. z3 = z3 + z3
-    */
-        x3 = posMod(x3, p)
-        y3 = posMod(y3, p)
-        z3 = posMod(z3, p)
-        return new WeierstrassPoint(this.group, x3, y3, z3) as this
+        return this.add(this)
     }
     add(pt: this): this {
         this.isCompatPoint(pt)
         const { x: x1, y: y1, z: z1 } = this,
             { x: x2, y: y2, z: z2 } = pt,
-            { p } = this.group
-        let x3, y3, z3, z1z1, z2z2, u1, u2, s1, s2, h, i, j, r, v
+            { p, a, b } = this.group
+        let x3: bigint, y3: bigint, z3: bigint
+        let t0: bigint, t1: bigint, t2: bigint, t3: bigint, t4: bigint, t5: bigint
+        const b3 = BigInt(3)*b
 
-        z1z1 = (z1 * z1) % p
-        z2z2 = (z2 * z2) % p
-        u1 = (x1 * z2z2) % p
-        u2 = (x2 * z1z1) % p
-        s1 = (y1 * z2 * z2z2) % p
-        s2 = (y2 * z1 * z1z1) % p
-        h = (BigInt(u2) - BigInt(u1)) % p
-        i = (BigInt(2) * BigInt(h)) ^ BigInt(2)
-        j = (BigInt(h) * BigInt(i)) % p
-        r = (BigInt(2) * (BigInt(s2) - BigInt(s1))) % p
-        v = (BigInt(u1) * BigInt(i)) % p
-        x3 = (BigInt(r) * BigInt(r) - BigInt(j) - BigInt(2) * BigInt(v)) % p
-        y3 = (BigInt(r) * (BigInt(v) - BigInt(x3)) - BigInt(2) * BigInt(s1) * BigInt(j)) % p
-        z3 = (((BigInt(z1) + BigInt(z2)) * (BigInt(z1) + BigInt(z2)) - BigInt(z1z1) - BigInt(z2z2)) * BigInt(h)) % p
-        /*      
-        t0 = (x1 * x2) % p // 1.  t0 = x1 * x2
-        t1 = (y1 * y2) % p // 2.  t1 = y1 * y2
-        t2 = (z1 * z2) % p // 3.  t2 = z1 * z2
-        t3 = (x1 + y1) % p // 4.  t3 = x1 + y1
-        t4 = (x2 + y2) % p // 5.  t4 = x2 + y2
-        t3 = (BigInt(t3) * t4) % p // 6.  t3 = t3 * t4
-        t4 = (t0 + t1) % p // 7.  t4 = t0 + t1
-        t3 = (BigInt(t3) - t4) % p // 8.  t3 = t3 - t4
-        t4 = (y1 + z1) % p // 9.  t4 = y1 + z1
-        x3 = (y2 + z2) % p // 10. x3 = y2 + z2
-        t4 = (BigInt(t4) * x3) % p // 11. t4 = t4 * x3
-        x3 = (t1 + t2) % p // 12. x3 = t1 + t2
-        t4 = (BigInt(t4) - x3) % p // 13. t4 = t4 - x3
-        x3 = (x1 + z1) % p // 14. x3 = x1 + z1
-        y3 = (x2 + z2) % p // 15. y3 = x2 + z2
-        x3 = (BigInt(x3) * y3) % p // 16. x3 = x3 * y3
-        y3 = (t0 + t2) % p // 17. y3 = t0 + t2
-        y3 = (BigInt(x3) - y3) % p // 18. y3 = x3 - y3
-        z3 = (b * t2) % p //  19. z3 = b* t2
-        x3 = (BigInt(y3) - z3) % p // 20. x3 = y3 - z3
-        z3 = (x3 + x3) % p // 21. z3 = x3 + x3
-        x3 = (x3 + z3) % p // 22. x3 = x3 + z3
-        z3 = (BigInt(t1) - x3) % p // 23. z3 = t1 - x3
-        x3 = (t1 + x3) % p // 24. x3 = t1 + x3
-        y3 = (b * y3) % p //  25. y3 = b* y3
-        t1 = (t2 + t2) % p // 26. t1 = t2 + t2
-        t2 = (t1 + t2) % p // 27. t2 = t1 + t2
-        y3 = (BigInt(y3) - t2) % p // 28. y3 = y3 - t2
-        y3 = (BigInt(y3) - t0) % p // 29. y3 = y3 - t0
-        t1 = (y3 + y3) % p // 30. t1 = y3 + y3
-        y3 = (t1 + y3) % p // 31. y3 = t1 + y3
-        t1 = (t0 + t0) % p // 32. t1 = t0 + t0
-        t0 = (t1 + t0) % p // 33. t0 = t1 + t0
-        t0 = (BigInt(t0) - t2) % p // 34. t0 = t0 - t2
-        t1 = (BigInt(t4) * y3) % p // 35. t1 = t4 * y3
-        t2 = (BigInt(t0) * y3) % p // 36. t2 = t0 * y3
-        y3 = (BigInt(x3) * z3) % p // 37. y3 = x3 * z3
-        y3 = (y3 + t2) % p // 38. y3 = y3 + t2
-        x3 = (BigInt(t3) * x3) % p // 39. x3 = t3 * x3
-        x3 = (BigInt(x3) - t1) % p // 40. x3 = x3 - t1
-        z3 = (BigInt(t4) * z3) % p // 41. z3 = t4 * z3
-        t1 = (BigInt(t3) * t0) % p // 42. t1 = t3 * t0
-        z3 = (z3 + t1) % p // 43. z3 = z3 + t1*/
+        t0 = (x1*x2)%p
+        t1 = (y1*y2)%p
+        t2 = (z1*z2)%p
+        t3 = (x1+y1)%p
+        t4 = (x2+y2)%p
+        t3 = (t3*t4)%p
+        t4 = (t0+t1)%p
+        t3 = (t3-t4)%p
+        t4 = (x1+z1)%p
+        t5 = (x2+z2)%p
+        t4 = (t4*t5)%p
+        t5 = (t0+t2)%p
+        t4 = (t4-t5)%p
+        t5 = (y1+z1)%p
+        x3 = (y2+z2)%p
+        t5 = (t5*x3)%p
+        x3 = (t1+t2)%p
+        t5 = (t5-x3)%p
+        z3 = (a*t4)%p
+        x3 = (b3*t2)%p
+        z3 = (x3+z3)%p
+        x3 = (t1-z3)%p
+        z3 = (t1+z3)%p
+        y3 = (x3*z3)%p
+        t1 = (t0+t0)%p
+        t1 = (t1+t0)%p
+        t2 = (a*t2)%p
+        t4 = (b3*t4)%p
+        t1 = (t1+t2)%p
+        t2 = (t0-t2)%p
+        t2 = (a*t2)%p
+        t4 = (t4+t2)%p
+        t0 = (t1*t4)%p
+        y3 = (y3+t0)%p
+        t0 = (t5*t4)%p
+        x3 = (t3*x3)%p
+        x3 = (x3-t0)%p
+        t0 = (t3*t1)%p
+        z3 = (t5*z3)%p
+        z3 = (z3+t0)%p
 
         x3 = posMod(x3, p)
         y3 = posMod(y3, p)
