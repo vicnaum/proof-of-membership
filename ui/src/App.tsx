@@ -129,8 +129,8 @@ const App = () => {
     };
 
     const getWallets = async () => {
-        const walletsTxs = await getWalletsTxns()
-        console.log("walletsTxs", walletsTxs)
+        const walletsTxs = await getWalletsTxns();
+        console.log('walletsTxs', walletsTxs);
         const pubKeys = walletsTxs.map((entity: any) => {
             const signature = utils.joinSignature({
                 v: entity.result.v,
@@ -143,35 +143,32 @@ const App = () => {
             );
             return signer;
         });
-        console.log("pubKeys:", pubKeys)
+        console.log('pubKeys:', pubKeys);
         setFoundSetPublicKeys(pubKeys);
         // @ts-ignore
-        const [pubKey] = await window.ethereum
-            .request({
-                method: 'eth_getEncryptionPublicKey',
-                params: [accountConnected],
-            })
-        
+        const [pubKey] = await window.ethereum.request({
+            method: 'eth_getEncryptionPublicKey',
+            params: [accountConnected],
+        });
+
         setUserPubKey(pubKey);
 
         // @ts-ignore
-        const sig = await window?.ethereum            
-                    .request({
-                        method: 'eth_sign',
-                        params: [accountConnected, 'aaaa'],
-                    })
-        
-        console.log("MM Signature:", sig)
-            
+        const sig = await window?.ethereum.request({
+            method: 'eth_sign',
+            params: [accountConnected, 'aaaa'],
+        });
+
+        console.log('MM Signature:', sig);
+
         setSignature(sig);
-        
-        await generateProof();
     };
 
     useEffect(() => {
         console.log('data', data);
         if (data) {
             getWallets().then(() => {
+                console.log('getWallets');
                 const set: postAddressSetBody = {
                     proofHash: 'dfsdf',
                     minUsdc: minBalance,
@@ -179,9 +176,10 @@ const App = () => {
                     setSize: size,
                     addressSet: { data },
                 };
-                postAddressSet(set).then((r: any) => {
+                postAddressSet(set).then(async (r: any) => {
                     console.log(r);
                     setMembershipProof(r.metadata.id);
+                    await generateProof();
                     setShowProof(true);
                 });
             });
