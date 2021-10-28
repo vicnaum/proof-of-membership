@@ -57,10 +57,17 @@ const App = () => {
         postAddressSetBody | any
     >({});
 
+    const [getUsers, { data: walletsMeetingConditions, loading }] =
+        useLazyQuery(QUERY, {
+            fetchPolicy: 'network-only',
+            onCompleted: () => constructProof(),
+        });
+
     // @ts-ignore
     const provider = new ethers.providers.Web3Provider(window?.ethereum);
     const signer = provider.getSigner();
 
+    // TODO: Make sure accounts only fetched once, or if they changed (there's a metamask handle for network/account change)
     useEffect(() => {
         // @ts-ignore
         window?.ethereum
@@ -75,11 +82,101 @@ const App = () => {
             });
     }, []);
 
-    const [getUsers, { data, loading }] = useLazyQuery(QUERY, {
-        fetchPolicy: 'network-only',
-    });
+    const constructProof = async (): Promise<any> => {
+        console.log('walletsMeetingConditions:', walletsMeetingConditions);
 
-    const retrieveTxnsPromises = async (): Promise<any> => {
+        const walletsPublicKeys = await prepareWallets();
+        console.log('walletsPublicKeys', walletsPublicKeys);
+        setFoundSetPublicKeys(walletsPublicKeys);
+
+        const userPubKey = await getUserPublicKey();
+        console.log('userPubKey:', userPubKey);
+        setUserPubKey(userPubKey);
+
+        const userSig = await getUserSignature(message);
+        console.log('userSig:', userSig);
+        setSignature(userSig);
+
+        if (walletsPublicKeys.indexOf(userPubKey) < 0) {
+            walletsPublicKeys.push(userPubKey);
+            console.log('adding user to the list');
+        }
+
+        const proof = JSON.stringify(
+            await generateProof(
+                message,
+                signature,
+                userPubKey,
+                walletsPublicKeys,
+            ),
+        );
+        console.log('proof lenght:', proof.length);
+
+        const proofHash = utils.keccak256(proof);
+        console.log('proofHash:', proofHash);
+        setMembershipProof(proofHash);
+
+        setShowProof(true);
+
+        const set: postAddressSetBody = {
+            proofHash,
+            minUsdc: minBalance,
+            maxUsdc: maxBalance,
+            setSize: size,
+            addressSet: { walletsPublicKeys },
+            proof,
+        };
+        postAddressSet(set);
+
+        console.log('Success');
+        return true;
+    };
+
+    const prepareWallets = async (): Promise<any> => {
+        const walletsTransactionsHashes = await retrieveTxnsHash(
+            walletsMeetingConditions,
+        );
+        console.log('walletsTransactionsHashes:', walletsTransactionsHashes);
+
+        const walletTransactions = await getWalletsTxns(
+            walletsTransactionsHashes,
+        );
+        console.log('walletTransactions:', walletTransactions);
+
+        const walletsPublicKeys = getWalletsPublicKeys(walletTransactions);
+        console.log('walletsPublicKeys:', walletsPublicKeys);
+
+        return walletsPublicKeys;
+    };
+
+    const getUserPublicKey = async (): Promise<any> => {
+        // @ts-ignore
+        const pubKey = await window.ethereum.request({
+            method: 'eth_getEncryptionPublicKey',
+            params: [accountConnected],
+        });
+        return pubKey;
+    };
+
+    const getUserSignature = async (message: string): Promise<any> => {
+        console.log('Signing message:', message);
+        let sig;
+        try {
+            // @ts-ignore
+            sig = await window?.ethereum.request({
+                method: 'eth_sign',
+                params: [accountConnected, message],
+            });
+        } catch (e) {
+            console.log(e);
+        }
+        console.log('MM Signature:', sig);
+        return sig;
+    };
+
+    const retrieveTxnsHash = async (
+        walletsMeetingConditions: any,
+    ): Promise<any> => {
         const requestOptions = {
             method: 'GET',
             headers: {
@@ -89,15 +186,16 @@ const App = () => {
 
         const accountTx = new Map<string, string>();
         const txAccount = new Map<string, string>();
-        const promisess: Promise<any>[] = data.users.map((row: any) =>
-            fetch(
-                `https://api.etherscan.io/api?module=account&action=txlist&address=${row.address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=9SQ26N4VERJTXBWXQ4H94X4X98UZ4VFPHB`,
-                requestOptions,
-            ).then(async (response) => {
-                const res = await response.json();
-                accountTx.set(row.address, res.result[0].hash);
-                txAccount.set(res.result[0].hash, row.address);
-            }),
+        const promisess: Promise<any>[] = walletsMeetingConditions.users.map(
+            (row: any) =>
+                fetch(
+                    `https://api.etherscan.io/api?module=account&action=txlist&address=${row.address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=9SQ26N4VERJTXBWXQ4H94X4X98UZ4VFPHB`,
+                    requestOptions,
+                ).then(async (response) => {
+                    const res = await response.json();
+                    accountTx.set(row.address, res.result[0].hash);
+                    txAccount.set(res.result[0].hash, row.address);
+                }),
         );
 
         const responses = await Promise.all(promisess);
@@ -108,9 +206,7 @@ const App = () => {
         });
     };
 
-    const getWalletsTxns = async (): Promise<any> => {
-        const txns = await retrieveTxnsPromises();
-
+    const getWalletsTxns = async (txns: any): Promise<any> => {
         const jsonRpcRequests = txns.map((hash: string, id: number) => {
             return `{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${hash}"],"id":${id}}`;
         });
@@ -128,8 +224,7 @@ const App = () => {
         return jsonResult;
     };
 
-    const getWallets = async () => {
-        const walletsTxs = await getWalletsTxns();
+    const getWalletsPublicKeys = (walletsTxs: any) => {
         console.log('walletsTxs', walletsTxs);
         const pubKeys = walletsTxs.map((entity: any) => {
             const signature = utils.joinSignature({
@@ -144,66 +239,27 @@ const App = () => {
             return signer;
         });
         console.log('pubKeys:', pubKeys);
-        setFoundSetPublicKeys(pubKeys);
-        // @ts-ignore
-        const [pubKey] = await window.ethereum.request({
-            method: 'eth_getEncryptionPublicKey',
-            params: [accountConnected],
-        });
-
-        setUserPubKey(pubKey);
-
-        // @ts-ignore
-        const sig = await window?.ethereum.request({
-            method: 'eth_sign',
-            params: [accountConnected, 'aaaa'],
-        });
-
-        console.log('MM Signature:', sig);
-
-        setSignature(sig);
+        return pubKeys;
     };
 
-    useEffect(() => {
-        console.log('data', data);
-        if (data) {
-            getWallets().then(() => {
-                console.log('getWallets');
-                const set: postAddressSetBody = {
-                    proofHash: 'dfsdf',
-                    minUsdc: minBalance,
-                    maxUsdc: maxBalance,
-                    setSize: size,
-                    addressSet: { data },
-                };
-                postAddressSet(set).then(async (r: any) => {
-                    console.log(r);
-                    setMembershipProof(r.metadata.id);
-                    await generateProof();
-                    setShowProof(true);
-                });
-            });
-        }
-    }, [data]);
-
-    const generateProof = async () => {
+    const generateProof = async (
+        message: any,
+        signature: any,
+        userPubKey: any,
+        publicKeys: any,
+    ): Promise<any> => {
         console.log('signature', signature);
         console.log('userPubKey', userPubKey);
         const proofsParamsList = generateParamsList();
         const proof = proveSignatureList(
             proofsParamsList,
-            hexStringToArrayBuffer(
-                utils.keccak256(
-                    '\x19Ethereum Signed Message:\n' +
-                        userPubKey.length +
-                        userPubKey,
-                ),
-            ),
+            hexStringToArrayBuffer(utils.keccak256(message)),
             new Uint8Array(signature as any),
             hexStringToArrayBuffer(userPubKey),
-            foundSetPublicKeys.indexOf(userPubKey) as number,
-            foundSetPublicKeys.map((pubkey) => BigInt(pubkey)),
+            publicKeys.indexOf(userPubKey) as number,
+            publicKeys.map((pubkey: any) => BigInt(pubkey)),
         );
+        return proof;
     };
 
     return (
@@ -293,7 +349,7 @@ const App = () => {
                         !size
                     }
                     colorScheme="orange"
-                    isLoading={loading}
+                    // isLoading={loading}
                     onClick={async () => {
                         getUsers({
                             variables: {
@@ -302,7 +358,6 @@ const App = () => {
                                 size: size,
                             },
                         });
-                        // await generateProof();
                     }}
                 >
                     Generate Proof

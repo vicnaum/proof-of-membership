@@ -4,6 +4,7 @@ export interface postAddressSetBody {
     maxUsdc: number | undefined;
     setSize: number | undefined;
     addressSet: Object;
+    proof: Object;
 }
 
 export const postAddressSet = (body: postAddressSetBody) => {
