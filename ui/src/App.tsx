@@ -28,6 +28,7 @@ import {
     proveSignatureList,
 } from '@zkp-ecdsa/lib/src/index.js';
 import { hexStringToArrayBuffer } from '@zkp-ecdsa/utils/hex-to-uint8-array';
+import { useEtherBalance, useEthers } from '@usedapp/core';
 
 const QUERY = gql`
     query GetUsers($balance_gt: Int!, $balance_lt: Int!, $size: Int!) {
@@ -56,6 +57,7 @@ const App = () => {
     const [proofElements, setProofElements] = useState<
         postAddressSetBody | any
     >({});
+    const { account, activateBrowserWallet, activate } = useEthers();
 
     const [getUsers, { data: walletsMeetingConditions, loading }] =
         useLazyQuery(QUERY, {
@@ -66,20 +68,27 @@ const App = () => {
     // @ts-ignore
     const provider = new ethers.providers.Web3Provider(window?.ethereum);
     const signer = provider.getSigner();
+    // const provider = window?.ethereum
+    //   ? new ethers.providers.Web3Provider(
+    //     // @ts-ignore
+    //     window?.ethereum,
+    //   )
+    //   : ethers.providers.getDefaultProvider();
 
     // TODO: Make sure accounts only fetched once, or if they changed (there's a metamask handle for network/account change)
     useEffect(() => {
-        // @ts-ignore
-        window?.ethereum
-            ?.request({
-                method: 'eth_requestAccounts',
-            })
-            .then((accounts: any) => {
-                console.log('accounts', accounts);
-                if (accounts.length && typeof accounts[0] === 'string') {
-                    setAccountConnected(accounts[0]);
-                }
-            });
+        activateBrowserWallet();
+        // // @ts-ignore
+        // window?.ethereum
+        //     ?.request({
+        //         method: 'eth_requestAccounts',
+        //     })
+        //     .then((accounts: any) => {
+        //         console.log('accounts', accounts);
+        //         if (accounts.length && typeof accounts[0] === 'string') {
+        //             setAccountConnected(accounts[0]);
+        //         }
+        //     });
     }, []);
 
     const constructProof = async (): Promise<any> => {

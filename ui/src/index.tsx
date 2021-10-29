@@ -8,49 +8,59 @@ import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
 import Footer from './Footer';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import ProofSet from './ProofSet';
+import { ChainId, Config, DAppProvider } from '@usedapp/core';
 
 const client = new ApolloClient({
     uri: 'https://api.thegraph.com/subgraphs/name/centrehq/usdc',
     cache: new InMemoryCache(),
 });
 
+const dAppConfig: Config = {
+    readOnlyChainId: ChainId.Mainnet,
+    readOnlyUrls: {
+        [ChainId.Mainnet]:
+            'https://eth-mainnet.alchemyapi.io/v2/wCzaTDAfLI6S5Mdc2suiOXcpf7Xzlk_w',
+    },
+};
 console.log('process.env.PUBLIC_URL', process.env.PUBLIC_URL);
 
 ReactDOM.render(
     <React.StrictMode>
-        <ChakraProvider>
-            <ApolloProvider client={client}>
-                <Flex
-                    style={{ height: '100vh' }}
-                    direction={'column'}
-                    justifyContent={'space-between'}
-                >
-                    <Box bgGradient="linear(to-b, orange.50, transparent)">
-                        <Container>
-                            <Stack>
-                                <img
-                                    src={`${process.env.PUBLIC_URL}/logo.svg`}
-                                    alt=""
-                                />
-                                <BrowserRouter
-                                    basename={process.env.PUBLIC_URL}
-                                >
-                                    <Switch>
-                                        <Route path="/:proofHash">
-                                            <ProofSet />
-                                        </Route>
-                                        <Route path="/">
-                                            <App />
-                                        </Route>
-                                    </Switch>
-                                </BrowserRouter>
-                            </Stack>
-                        </Container>
-                    </Box>
-                    <Footer />
-                </Flex>
-            </ApolloProvider>
-        </ChakraProvider>
+        <DAppProvider config={{}}>
+            <ChakraProvider>
+                <ApolloProvider client={client}>
+                    <Flex
+                        style={{ height: '100vh' }}
+                        direction={'column'}
+                        justifyContent={'space-between'}
+                    >
+                        <Box bgGradient="linear(to-b, orange.50, transparent)">
+                            <Container>
+                                <Stack>
+                                    <img
+                                        src={`${process.env.PUBLIC_URL}/logo.svg`}
+                                        alt=""
+                                    />
+                                    <BrowserRouter
+                                        basename={process.env.PUBLIC_URL}
+                                    >
+                                        <Switch>
+                                            <Route path="/:proofHash">
+                                                <ProofSet />
+                                            </Route>
+                                            <Route path="/">
+                                                <App />
+                                            </Route>
+                                        </Switch>
+                                    </BrowserRouter>
+                                </Stack>
+                            </Container>
+                        </Box>
+                        <Footer />
+                    </Flex>
+                </ApolloProvider>
+            </ChakraProvider>
+        </DAppProvider>
     </React.StrictMode>,
     document.getElementById('root'),
 );
