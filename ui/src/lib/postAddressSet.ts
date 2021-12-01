@@ -7,7 +7,7 @@ export interface postAddressSetBody {
     proof: Object;
 }
 
-export const postAddressSet = (body: postAddressSetBody) => {
+export const postAddressSet = async (body: postAddressSetBody): Promise<boolean> => {
     const requestOptions = {
         method: 'POST',
         headers: {
@@ -16,9 +16,9 @@ export const postAddressSet = (body: postAddressSetBody) => {
                 '$2b$10$rJt/jHy0W/OoJaX3Som3lu7NepipWzBp/QviO0c28o8Zad0.0RHaO',
         },
         body: JSON.stringify(body),
-    };
+    }
 
-    return fetch('https://api.jsonbin.io/v3/b', requestOptions).then(
-        (response) => response.json(),
-    );
-};
+    let response = await fetch('https://api.jsonbin.io/v3/b', requestOptions)
+    console.log(await response.json())
+    return response.ok
+}

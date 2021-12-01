@@ -87,7 +87,7 @@ function truncateToN(msg: bigint, n: bigint): bigint {
 }
 
 // secLevel = 10 decrease proof size
-export function generateParamsList(secLevel = 80, curve: WeierstrassGroup = secp256k1): SystemParametersList {
+export function generateParamsList(secLevel = 10, curve: WeierstrassGroup = secp256k1): SystemParametersList {
     const nistGroup = generatePedersenParams(curve),
         proofGroup = generatePedersenParams(tomEdwards256)
     return new SystemParametersList(nistGroup, proofGroup, secLevel)

@@ -1,66 +1,62 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import App from './pages/App';
 import reportWebVitals from './reportWebVitals';
 import { Box, ChakraProvider, Container, Flex, Stack } from '@chakra-ui/react';
 import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
-import Footer from './Footer';
+import Footer from './components/Footer'
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import ProofSet from './ProofSet';
-import { ChainId, Config, DAppProvider } from '@usedapp/core';
+import ProofSet from './pages/ProofSet';
+
+declare global {
+    interface Window {
+        ethereum: any
+    }
+}
 
 const client = new ApolloClient({
     uri: 'https://api.thegraph.com/subgraphs/name/centrehq/usdc',
     cache: new InMemoryCache(),
 });
 
-const dAppConfig: Config = {
-    readOnlyChainId: ChainId.Mainnet,
-    readOnlyUrls: {
-        [ChainId.Mainnet]:
-            'https://eth-mainnet.alchemyapi.io/v2/wCzaTDAfLI6S5Mdc2suiOXcpf7Xzlk_w',
-    },
-};
 console.log('process.env.PUBLIC_URL', process.env.PUBLIC_URL);
 
 ReactDOM.render(
     <React.StrictMode>
-        <DAppProvider config={{}}>
-            <ChakraProvider>
-                <ApolloProvider client={client}>
-                    <Flex
-                        style={{ height: '100vh' }}
-                        direction={'column'}
-                        justifyContent={'space-between'}
-                    >
-                        <Box bgGradient="linear(to-b, orange.50, transparent)">
-                            <Container>
-                                <Stack>
-                                    <img
-                                        src={`${process.env.PUBLIC_URL}/logo.svg`}
-                                        alt=""
-                                    />
-                                    <BrowserRouter
-                                        basename={process.env.PUBLIC_URL}
-                                    >
-                                        <Switch>
-                                            <Route path="/:proofHash">
-                                                <ProofSet />
-                                            </Route>
-                                            <Route path="/">
-                                                <App />
-                                            </Route>
-                                        </Switch>
-                                    </BrowserRouter>
-                                </Stack>
-                            </Container>
-                        </Box>
-                        <Footer />
-                    </Flex>
-                </ApolloProvider>
-            </ChakraProvider>
-        </DAppProvider>
+        <ChakraProvider>
+            <ApolloProvider client={client}>
+                <Flex
+                    style={{ height: '100vh' }}
+                    direction={'column'}
+                    justifyContent={'space-between'}
+                >
+                    <Box bgGradient="linear(to-b, orange.50, transparent)">
+                        <Container>
+                            <Stack>
+                                <img
+                                    src={`${process.env.PUBLIC_URL}/logo.svg`}
+                                    alt=""
+                                />
+                                <BrowserRouter
+                                    basename={process.env.PUBLIC_URL}
+                                >
+                                    <Switch>
+                                        <Route path="/:proofHash">
+                                            <ProofSet />
+                                        </Route>
+                                        <Route path="/">
+                                            <App />
+                                        </Route>
+                                    </Switch>
+                                </BrowserRouter>
+                            </Stack>
+                        </Container>
+                    </Box>
+                    <Footer />
+                </Flex>
+            </ApolloProvider>
+        </ChakraProvider>
     </React.StrictMode>,
     document.getElementById('root'),
 );
